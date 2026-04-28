@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Espectador</title>
+  </head>
+  <body>
+    <h2>👀 Espectando partida</h2>
+
+    <input id="codigo" placeholder="Código sala" />
+    <button onclick="entrar()">Entrar</button>
+
+    <div id="info"></div>
+
+    <script>
+      let ws = new WebSocket('ws://18.118.143.99:5000');
+
+      ws.onmessage = event => {
+        const data = JSON.parse(event.data);
+        console.log(data);
+
+        if (data.tipo === 'jugadas') {
+          document.getElementById('info').innerHTML = data.jugadores
+            .map(
+              j => `
+        <p>
+          ${j.nombre} 
+          ${j.cartas ? '🃏 ' + j.cartas.join(', ') : ''}
+          ${j.seleccion ? '🎴 ' + j.seleccion : ''}
+        </p>
+      `,
+            )
+            .join('');
+        }
+
+        if (data.tipo === 'estado') {
+          document.getElementById(
+            'info',
+          ).innerHTML += `<p>📊 Ronda: ${data.ronda}</p>`;
+        }
+
+        if (data.tipo === 'resultado') {
+          document.getElementById(
+            'info',
+          ).innerHTML += `<p>🏆 ${data.ganador}</p>`;
+        }
+
+        if (data.tipo === 'fin_juego') {
+          document.getElementById(
+            'info',
+          ).innerHTML += `<h3>🏁 Ganador final: ${data.ganador} (${data.puntos} pts)</h3>`;
+        }
+      };
+
+      function entrar() {
+        const codigo = document.getElementById('codigo').value;
+
+        ws.send(
+          JSON.stringify({
+            tipo: 'espectar_sala',
+            codigo: codigo,
+          }),
+        );
+      }
+    </script>
+  </body>
+</html>
